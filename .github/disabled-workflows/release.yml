@@ -1,0 +1,93 @@
+# See below for details:
+#   - Workflow syntax for GitHub Actions: https://git.io/JvxXE
+#   - Official GitHub Actions workflows: https://git.io/Jf7CK
+#   - Persisting workflow data using artifacts：https://git.io/JfFkr
+#   - upload-artifact: https://github.com/actions/upload-artifact
+#   - download-artifact: https://github.com/actions/download-artifact
+#   - create-release: https://github.com/actions/create-release
+#   - upload-release-asset: https://github.com/actions/upload-release-asset
+#   - hub: https://github.com/github/hub
+#   - rust.yml: https://git.io/Jf7Cu
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  prepare:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12"
+      - name: Install dependencies
+        run: |
+          npm i -g \
+            commonmark@">=0.29.1" \
+            prettier@">=2.0.5"
+        shell: bash
+      - name: Prepare release asset
+        env:
+          CARGO_TERM_COLOR: always
+        run: |
+          mkdir .github/artifacts
+          tag="$(printf '%s\n' "${{ github.ref }}" | cut -d / -f 3)"
+          base_url="https://github.com/${{ github.repository }}/blob/$tag"
+          sh .devcontainer/container/shebang-run \
+            scripts/release/prepare-release-asset.sh \
+            --base-url "$base_url" \
+            --output-dir .github/artifacts
+        shell: bash
+      - uses: actions/upload-artifact@v2
+        with:
+          path: .github/artifacts
+  release:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          path: .github/artifacts
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu -o pipefail
+
+          tag="$(printf '%s\n' "${{ github.ref }}" | cut -d / -f 3)"
+          version="${tag#v}"
+          release_notes="$(
+            sh .devcontainer/container/shebang-run \
+              scripts/release/release-notes-generator.sh \
+              "$version"
+          )"
+
+          # Generate checksums
+          cd .github/artifacts/artifact
+          sha256sum -- * > SHA256SUMS.txt
+          cd - >/dev/null
+
+          # Use hub instead to use create-release and upload-release-asset for
+          # two reasons:
+          #   - No elegant way to support multi-line: https://git.io/JfFHC
+          #   - It doesn't support upload assets without knowing files' count
+          hub_release_message="$(printf '%s\n\n%s' "$tag" "$release_notes")"
+          hub_release() {
+            if printf '%s\n' "$tag" | grep -q -F '-'; then
+              set -- '-f'
+            fi
+            for filepath in .github/artifacts/artifact/*; do
+              set -- '-a' "$filepath" "$@"
+            done
+            hub release create "$@" -m "$hub_release_message" "$tag"
+          }
+          hub_release
+        shell: bash

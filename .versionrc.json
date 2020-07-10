@@ -1,0 +1,24 @@
+{
+  "//": [
+    "See below for details:",
+    "   - README: https://github.com/conventional-changelog/standard-version",
+    "   - default.js: https://git.io/JfcKI"
+  ],
+  "commitAll": true,
+  "bumpFiles": [
+    {
+      "filename": "Cargo.toml",
+      "updater": "scripts/standard-version/rust-toml-updater.js"
+    }
+  ],
+  "packageFiles": [
+    {
+      "filename": "Cargo.toml",
+      "updater": "scripts/standard-version/rust-toml-updater.js"
+    }
+  ],
+  "scripts": {
+    "postbump": "shebang-run scripts/standard-version/postbump.sh",
+    "precommit": "shebang-run scripts/standard-version/precommit.sh"
+  }
+}

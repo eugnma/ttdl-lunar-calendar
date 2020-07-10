@@ -1,0 +1,13 @@
+- [ ] Replace the name property in .devcontainer/devcontainer.json
+- [ ] Replace all occurrences of "[INSERT CONTACT METHOD]" in CODE_OF_CONDUCT.md
+- [ ] Replace all occurrences of "[INSERT PROJECT NAME]" in CONTRIBUTING.md
+- [ ] Replace all occurrences of "[INSERT PROJECT NAME]" in README.md
+- [ ] Replace all occurrences of "[INSERT LICENSE DESCRIPTION]" in README.md
+- [ ] Replace the package.name property in Cargo.toml
+- [ ] Uncomment Cargo.lock in .gitignore if required
+
+# Recommended licenses:
+
+- MIT OR Apache-2.0 (see https://git.io/Jf0ed for additional changes)
+- MIT
+- GPL-2.0

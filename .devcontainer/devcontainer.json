@@ -1,0 +1,28 @@
+// See https://aka.ms/vscode-remote/devcontainer.json for details.
+{
+  "name": "dev-container-template-rust",
+  "dockerFile": "Dockerfile",
+  "runArgs": [
+    "--disable-content-trust",
+    "--env-file=${localWorkspaceFolder}/.env",
+    "--cap-add=SYS_PTRACE",
+    "--security-opt=seccomp=unconfined"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "editorconfig.editorconfig",
+    "streetsidesoftware.code-spell-checker",
+    "tyriar.sort-lines",
+    "esbenp.prettier-vscode",
+    "exiasr.hadolint",
+    "timonwong.shellcheck",
+    "foxundermoon.shell-format",
+    "DavidAnson.vscode-markdownlint",
+    "rust-lang.rust",
+    "vadimcn.vscode-lldb"
+  ],
+  // "forwardPorts": [7878],
+  "initializeCommand": "touch .env"
+}

@@ -1,0 +1,6 @@
+{
+    "exclude": [
+        ".vscode/launch.json$",
+        "Cargo.lock$"
+    ]
+}

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#
+# Used Non-POSIX features:
+#   - pipefail
+
+set -eu -o pipefail
+
+# commit_msg: https://git-scm.com/docs/githooks#_commit_msg
+commit_msg_filepath="${1:?}"
+grep -v '^#' "$commit_msg_filepath" | commitlint

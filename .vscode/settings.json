@@ -1,0 +1,19 @@
+{
+  //
+  // VSCode/Telemetry: https://code.visualstudio.com/docs/getstarted/telemetry
+  "telemetry.enableTelemetry": false,
+  "telemetry.enableCrashReporter": false,
+  //
+  // VSCode/Others
+  "editor.formatOnSave": true,
+  "editor.rulers": [80, 100],
+  // The pattern of files.associations setting: https://code.visualstudio.com/docs/languages/overview#_can-i-map-additional-file-extensions-to-a-language
+  "files.associations": {
+    ".*ignore": "ignore"
+  },
+  //
+  // shellformat
+  "shellformat.effectLanguages": ["shellscript"],
+  // FUTURE: Use the same config for shfmt and vs-shell-format if possible
+  "shellformat.flag": "-i 2 -bn -ci"
+}

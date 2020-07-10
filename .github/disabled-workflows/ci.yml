@@ -1,0 +1,57 @@
+# See below for details:
+#   - Workflow syntax for GitHub Actions: https://git.io/JvxXE
+#   - Official GitHub Actions workflows: https://git.io/Jf7CK
+#   - Caching dependencies to speed up workflows: https://git.io/Jf5h0
+#   - actions/cache: https://github.com/actions/cache
+#   - rust.yml: https://git.io/Jf7Cu
+
+name: Continuous integration
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache the development Docker image
+        uses: actions/cache@v2
+        with:
+          path: .github/cache/devcontainer.tar
+          key: devcontainer-${{ hashFiles('.devcontainer/Dockerfile') }}
+      - name: Prepare the development Docker image
+        run: |
+          if [ -f .github/cache/devcontainer.tar ]; then
+            docker image load -i .github/cache/devcontainer.tar
+          else
+            docker build -t container-action .devcontainer
+            mkdir .github/cache
+            docker save -o .github/cache/devcontainer.tar container-action
+          fi
+      - name: Lint
+        run: |
+          docker run \
+            -t \
+            -v "$PWD":"$PWD" \
+            -w "$PWD" \
+            -u root \
+            container-action shebang-run scripts/lint.sh \
+              --dir-files-filter tracked-only-if-vcs \
+              .
+  test:
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        env:
+          CARGO_TERM_COLOR: always
+        run: sh .devcontainer/container/shebang-run scripts/test.sh --release
+        shell: bash

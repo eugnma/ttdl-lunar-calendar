@@ -1,0 +1,5 @@
+# See below for details:
+#  - Local setup: https://commitlint.js.org/#/guides-local-setup
+#  - Config: https://github.com/conventional-changelog/commitlint#config
+#  - Configuration: https://commitlint.js.org/#/reference-configuration
+extends: ["@commitlint/config-conventional"]

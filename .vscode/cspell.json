@@ -1,0 +1,27 @@
+// See below for details:
+//  - README: https://git.io/JfOAx
+//  - Official example: https://git.io/JfOxF
+{
+  "version": "0.1",
+  "language": "en-US",
+  "words": [
+    "commitlint", //
+    "CommonMark",
+    "devcontainer",
+    "macOS",
+    "mkdir",
+    "pipefail",
+    "postbump",
+    "precommit",
+    "printf",
+    "shellformat",
+    "shfmt"
+  ],
+  "ignorePaths": [
+    "/.devcontainer/devcontainer.json", //
+    "/.vscode/launch.json",
+    "/Cargo.lock",
+    "/Cargo.toml",
+    "/CODE_OF_CONDUCT.md"
+  ]
+}

@@ -1,0 +1,25 @@
+# See below for configuration details:
+#   - EditorConfig: http://editorconfig.org
+#   - EditorConfig for VS Code: https://git.io/JfOpU
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{js,json,md,sh,yml}]
+indent_size = 2
+
+[/.devcontainer/container/git/.gitmessage.txt]
+insert_final_newline = false
+
+[/.devcontainer/container/git/hooks/*]
+indent_size = 2
+
+[/.devcontainer/container/shebang-run]
+indent_size = 2

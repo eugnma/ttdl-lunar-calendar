@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+#
+# The current working directory will always be the root of the working tree in a
+# non-bare repository for pre-commit hook, see
+# https://git-scm.com/docs/githooks#_description for details.
+
+set -eu
+
+shebang-run scripts/test.sh
+shebang-run scripts/lint.sh \
+  --no-build \
+  --dir-files-filter new-changes-only-if-vcs \
+  .
