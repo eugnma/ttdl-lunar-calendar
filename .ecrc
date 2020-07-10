@@ -1,6 +1,7 @@
 {
     "exclude": [
         ".vscode/launch.json$",
-        "Cargo.lock$"
+        "Cargo.lock$",
+        "LICENSE-APACHE$"
     ]
 }

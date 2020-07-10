@@ -35,7 +35,7 @@ EOF
 
 get_program_name() {
   # CHANGE THE SCRIPT HERE TO GET THE PROGRAM NAME!
-  printf '%s\n' 'dev-container-template-rust'
+  printf '%s\n' 'ttdl-lunar-calendar'
 }
 
 prepare_release_artifacts() {

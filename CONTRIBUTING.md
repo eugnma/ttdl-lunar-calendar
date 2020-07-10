@@ -1,4 +1,4 @@
-# Contributing to [INSERT PROJECT NAME]
+# Contributing to ttdl-lunar-calendar
 
 Thank you for considering contributing to this project, contributions are always
 welcome!

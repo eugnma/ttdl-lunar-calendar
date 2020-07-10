@@ -12,4 +12,4 @@
 # Track Cargo.lock if creating an end product, ignore it for libraries, see
 # https://doc.rust-lang.org/cargo/guide/cargo-toml-vs-cargo-lock.html for
 # details.
-Cargo.lock
+# Cargo.lock

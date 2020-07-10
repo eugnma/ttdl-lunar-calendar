@@ -8,6 +8,7 @@
     "commitlint", //
     "CommonMark",
     "devcontainer",
+    "lunardate",
     "macOS",
     "mkdir",
     "pipefail",
@@ -15,13 +16,16 @@
     "precommit",
     "printf",
     "shellformat",
-    "shfmt"
+    "shfmt",
+    "todo's",
+    "TTDL"
   ],
   "ignorePaths": [
     "/.devcontainer/devcontainer.json", //
     "/.vscode/launch.json",
     "/Cargo.lock",
     "/Cargo.toml",
-    "/CODE_OF_CONDUCT.md"
+    "/CODE_OF_CONDUCT.md",
+    "/LICENSE-THIRD-PARTY"
   ]
 }
