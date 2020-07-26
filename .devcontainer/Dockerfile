@@ -17,12 +17,6 @@ RUN apt-get update \
         ca-certificates/buster \
         gnupg/buster \
     #
-    # Download hadolint (https://github.com/hadolint/hadolint)
-    && url='https://git.io/JfOpt' \
-    && c='70a79aa3f1c2462ffbf698bdc4ba7e2a0caef28881000f2c631f1c088dbd5d25' \
-    && curl -sSL -o hadolint "$url" \
-    && echo "$c hadolint" | sha256sum -c --status \
-    #
     # Download and verify the NodeSource package signing key
     && url='https://deb.nodesource.com/gpgkey/nodesource.gpg.key' \
     && curl -sSL -o nodesource.gpg.key "$url" \
@@ -40,29 +34,89 @@ RUN apt-get update \
 
 
 ##
-# shfmt-builder
-FROM golang:1-buster as shfmt-builder
+# editorconfig-checker-getter
+FROM golang:1-buster AS editorconfig-checker-getter
 
-# NOTE: DO NOT USE shfmt OUTSIDE OF CONTAINER!
-# Install shfmt
-#   - README: https://github.com/mvdan/sh
-#   - Go module compatibility and semantic versioning: https://golang.org/cmd/go/#hdr-Module_compatibility_and_semantic_versioning
-#   - Dockerfile: https://github.com/mvdan/sh/blob/master/cmd/shfmt/Dockerfile
-RUN GO111MODULE=on go get mvdan.cc/sh/v3/cmd/shfmt
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Install editorconfig-checker
+#   - Repository: https://github.com/editorconfig-checker/editorconfig-checker
+#   - Alternative: https://gitlab.com/greut/eclint
+RUN readonly VERSION='2.1.0'; \
+    if [ "$(uname -m)" = 'x86_64' ]; then \
+        url="https://github.com/editorconfig-checker/editorconfig-checker/releases/download/${VERSION}/ec-linux-amd64.tar.gz"; \
+        checksum='ab047668a046353fb9618bc7de09d8e80e2a81d229722132709cdd60b56f7ec9'; \
+        curl -sSL -o ec-linux-amd64.tar.gz "$url"; \
+        echo "$checksum ec-linux-amd64.tar.gz" | sha256sum -c --status; \
+        tar -x \
+            -f ec-linux-amd64.tar.gz \
+            -C /opt/ \
+            bin/ec-linux-amd64; \
+        mv /opt/bin/ec-linux-amd64 /opt/ec; \
+    else \
+        git clone \
+            -c advice.detachedHead=false \
+            -b "$VERSION" \
+            --depth 1 \
+            https://github.com/editorconfig-checker/editorconfig-checker.git; \
+        echo "Revision: $(git -C editorconfig-checker rev-parse HEAD)"; \
+        make -C editorconfig-checker build; \
+        mv editorconfig-checker/bin/ec /opt/; \
+    fi; \
+    chmod 755 /opt/ec;
 
 
 ##
-# editorconfig-checker-builder
-FROM golang:1-buster as editorconfig-checker-builder
+# hadolint-getter
+FROM haskell:8-buster AS hadolint-getter
 
-# Install editorconfig-checker
-#   - README: https://github.com/editorconfig-checker/editorconfig-checker
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Download or build hadolint
+#   - Repository: https://github.com/hadolint/hadolint
+RUN readonly VERSION='v1.18.0'; \
+    if [ "$(uname -m)" = 'x86_64' ]; then \
+        url="https://github.com/hadolint/hadolint/releases/download/${VERSION}/hadolint-Linux-x86_64"; \
+        checksum='f9bc9de12438b463ca84e77fde70b07b155d4da07ca21bc3f4354a62c6199db4'; \
+        curl -sSL -o hadolint "$url"; \
+        echo "$checksum hadolint" | sha256sum -c --status; \
+        cp hadolint /opt/; \
+    else \
+        git clone \
+            -c advice.detachedHead=false \
+            -b "$VERSION" \
+            --depth 1 \
+            https://github.com/hadolint/hadolint.git; \
+        echo "Revision: $(git -C hadolint rev-parse HEAD)"; \
+        stack setup; \
+        stack install hadolint; \
+        cp "$HOME/.local/bin/hadolint" /opt/; \
+    fi; \
+    chmod 755 /opt/hadolint;
+
+##
+# shfmt-getter
+FROM golang:1-buster AS shfmt-getter
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# NOTE: DO NOT USE shfmt OUTSIDE OF CONTAINER!
+# Download or build shfmt
+#   - Repository: https://github.com/mvdan/sh
 #   - GO111MODULE: https://golang.org/cmd/go/#hdr-Module_support
-#   - Module queries: https://golang.org/cmd/go/#hdr-Module_queries
-#   - Alternative: https://gitlab.com/greut/eclint
-RUN repo='github.com/editorconfig-checker/editorconfig-checker' \
-    && GO111MODULE=on go get "$repo/cmd/editorconfig-checker@2.0.4" \
-    && mv /go/bin/editorconfig-checker /go/bin/ec
+#   - Go module compatibility and semantic versioning: https://golang.org/cmd/go/#hdr-Module_compatibility_and_semantic_versioning
+RUN readonly VERSION='v3.1.2'; \
+    if [ "$(uname -m)" = 'x86_64' ]; then \
+        url="https://github.com/mvdan/sh/releases/download/${VERSION}/shfmt_${VERSION}_linux_amd64"; \
+        checksum='c5794c1ac081f0028d60317454fe388068ab5af7740a83e393515170a7157dce'; \
+        curl -sSL -o "shfmt_${VERSION}_linux_amd64" "$url"; \
+        echo "$checksum shfmt_${VERSION}_linux_amd64" | sha256sum -c --status; \
+        cp "shfmt_${VERSION}_linux_amd64" /opt/shfmt; \
+    else \
+        GO111MODULE=on go get "mvdan.cc/sh/v3/cmd/shfmt@$VERSION"; \
+        cp /go/bin/shfmt /opt/; \
+    fi; \
+    chmod 755 /opt/shfmt;
 
 
 ##
@@ -108,10 +162,10 @@ COPY --chown=$USERNAME:$USER_GNAME \
 COPY --chown=$USERNAME:$USER_GNAME \
     container/git/hooks \
     "/home/$USERNAME/.githooks/"
-COPY --from=downloader /downloads/hadolint /usr/local/bin/
 COPY --from=downloader /downloads/nodesource.gpg.key /root
-COPY --from=shfmt-builder /go/bin/shfmt /usr/local/bin/
-COPY --from=editorconfig-checker-builder go/bin/ec /usr/local/bin/
+COPY --from=editorconfig-checker-getter /opt/ec /usr/local/bin/
+COPY --from=hadolint-getter /opt/hadolint /usr/local/bin/
+COPY --from=shfmt-getter /opt/shfmt /usr/local/bin/
 
 # The following package are already existed in the base image:
 #   - git
@@ -131,7 +185,7 @@ RUN apt-get update \
     && apt-get update \
     #
     # Setup the shebang-run command
-    && chmod +x /usr/local/bin/shebang-run \
+    && chmod 755 /usr/local/bin/shebang-run \
     #
     # Setup Git
     #   - Git Configuration: https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration
@@ -145,7 +199,7 @@ RUN apt-get update \
         git config --global commit.template ~/.gitmessage.txt; \
         git config --global core.hooksPath ~/.githooks; \
     " \
-    && chmod -R +x "/home/$USERNAME/.githooks/" \
+    && chmod -R 755 "/home/$USERNAME/.githooks/" \
     #
     # Install Node.js
     #   - Required by some conventional Commits tool and lint
@@ -166,21 +220,21 @@ RUN apt-get update \
     #   - commitlint
     #   - standard-version
     && npm i -g \
-        @commitlint/cli@">=8.3.5" \
-        @commitlint/config-conventional@">=8.3.4" \
-        standard-version@">=8.0.0" \
+        @commitlint/cli@">=9.1.1" \
+        @commitlint/config-conventional@">=9.1.1" \
+        standard-version@">=8.0.2" \
     #
     # Linters
+    #   - [Installed] ec for EditorConfig
+    #   - [Installed] hadolint for Dockerfile
+    #   - [Installed] shfmt for Shell script
     #   - [Installed] commitlint for commit messages
     #   - Prettier for JavaScript, Markdown, YAML, etc.
     #   - markdownlint-cli for Markdown
-    #   - hadolint for Dockerfile
     #   - ShellCheck for Shell script
-    #   - [Installed] shfmt for Shell script
     && npm i -g \
         prettier@">=2.0.5" \
-        markdownlint-cli@">=0.23.0" \
-    && chmod +x /usr/local/bin/hadolint \
+        markdownlint-cli@">=0.23.2" \
     && apt-get install -y --no-install-recommends shellcheck/buster-backports \
     #
     # Licenses
@@ -192,7 +246,7 @@ RUN apt-get update \
     && \
     if [ "$ENABLE_LICENSEFINDER" = '1' ]; then \
         apt-get install -y --no-install-recommends ruby/buster; \
-        gem install license_finder -v '>=6.3.0'; \
+        gem install license_finder -v '>=6.7.0'; \
     fi \
     #
     # Release
