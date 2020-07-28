@@ -19,7 +19,7 @@ RUN apt-get update \
     #
     # Download and verify the NodeSource package signing key
     && url='https://deb.nodesource.com/gpgkey/nodesource.gpg.key' \
-    && curl -sSL -o nodesource.gpg.key "$url" \
+    && curl -sSLf -o nodesource.gpg.key "$url" \
     # How to display gpg key details without importing it?
     # https://stackoverflow.com/q/22136029
     && gpg nodesource.gpg.key 2>/dev/null \
@@ -42,11 +42,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install editorconfig-checker
 #   - Repository: https://github.com/editorconfig-checker/editorconfig-checker
 #   - Alternative: https://gitlab.com/greut/eclint
-RUN readonly VERSION='2.1.0'; \
+RUN set -eu; \
+    readonly VERSION='2.1.0'; \
     if [ "$(uname -m)" = 'x86_64' ]; then \
         url="https://github.com/editorconfig-checker/editorconfig-checker/releases/download/${VERSION}/ec-linux-amd64.tar.gz"; \
         checksum='ab047668a046353fb9618bc7de09d8e80e2a81d229722132709cdd60b56f7ec9'; \
-        curl -sSL -o ec-linux-amd64.tar.gz "$url"; \
+        curl -sSLf -o ec-linux-amd64.tar.gz "$url"; \
         echo "$checksum ec-linux-amd64.tar.gz" | sha256sum -c --status; \
         tar -x \
             -f ec-linux-amd64.tar.gz \
@@ -74,11 +75,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Download or build hadolint
 #   - Repository: https://github.com/hadolint/hadolint
-RUN readonly VERSION='v1.18.0'; \
+RUN set -eu; \
+    readonly VERSION='v1.18.0'; \
     if [ "$(uname -m)" = 'x86_64' ]; then \
         url="https://github.com/hadolint/hadolint/releases/download/${VERSION}/hadolint-Linux-x86_64"; \
         checksum='f9bc9de12438b463ca84e77fde70b07b155d4da07ca21bc3f4354a62c6199db4'; \
-        curl -sSL -o hadolint "$url"; \
+        curl -sSLf -o hadolint "$url"; \
         echo "$checksum hadolint" | sha256sum -c --status; \
         cp hadolint /opt/; \
     else \
@@ -105,11 +107,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 #   - Repository: https://github.com/mvdan/sh
 #   - GO111MODULE: https://golang.org/cmd/go/#hdr-Module_support
 #   - Go module compatibility and semantic versioning: https://golang.org/cmd/go/#hdr-Module_compatibility_and_semantic_versioning
-RUN readonly VERSION='v3.1.2'; \
+RUN set -eu; \
+    readonly VERSION='v3.1.2'; \
     if [ "$(uname -m)" = 'x86_64' ]; then \
         url="https://github.com/mvdan/sh/releases/download/${VERSION}/shfmt_${VERSION}_linux_amd64"; \
         checksum='c5794c1ac081f0028d60317454fe388068ab5af7740a83e393515170a7157dce'; \
-        curl -sSL -o "shfmt_${VERSION}_linux_amd64" "$url"; \
+        curl -sSLf -o "shfmt_${VERSION}_linux_amd64" "$url"; \
         echo "$checksum shfmt_${VERSION}_linux_amd64" | sha256sum -c --status; \
         cp "shfmt_${VERSION}_linux_amd64" /opt/shfmt; \
     else \
@@ -192,6 +195,7 @@ RUN apt-get update \
     #   - Multiline Dockerfile syntax: https://github.com/moby/moby/issues/1799
     #   - Using Version Control in VS Code: https://code.visualstudio.com/Docs/editor/versioncontrol
     && su - $USERNAME -c " \
+        set -eu; \
         git config --global core.editor 'code --wait'; \
         git config --global diff.tool default-difftool; \
         git config --global difftool.default-difftool.cmd \
@@ -245,8 +249,8 @@ RUN apt-get update \
     #         tracking what dependencies are removed
     && \
     if [ "$ENABLE_LICENSEFINDER" = '1' ]; then \
-        apt-get install -y --no-install-recommends ruby/buster; \
-        gem install license_finder -v '>=6.7.0'; \
+        apt-get install -y --no-install-recommends ruby/buster \
+        && gem install license_finder -v '>=6.7.0'; \
     fi \
     #
     # Release
