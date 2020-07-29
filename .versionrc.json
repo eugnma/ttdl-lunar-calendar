@@ -18,7 +18,7 @@
     }
   ],
   "scripts": {
-    "postbump": "shebang-run scripts/standard-version/postbump.sh",
-    "precommit": "shebang-run scripts/standard-version/precommit.sh"
+    "postbump": "bash scripts/standard-version/postbump.sh",
+    "precommit": "bash scripts/standard-version/precommit.sh"
   }
 }

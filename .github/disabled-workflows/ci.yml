@@ -39,7 +39,7 @@ jobs:
             -v "$PWD":"$PWD" \
             -w "$PWD" \
             -u root \
-            container-action shebang-run scripts/lint.sh \
+            container-action bash scripts/lint.sh \
               --dir-files-filter tracked-only-if-vcs \
               .
   test:
@@ -53,5 +53,5 @@ jobs:
       - name: Run tests
         env:
           CARGO_TERM_COLOR: always
-        run: sh .devcontainer/container/shebang-run scripts/test.sh --release
+        run: bash scripts/test.sh --release
         shell: bash

@@ -2,8 +2,8 @@
 
 set -eu
 
-shebang-run scripts/test.sh
-shebang-run scripts/lint.sh \
+bash scripts/test.sh
+bash scripts/lint.sh \
   --no-build \
   --dir-files-filter new-changes-only-if-vcs \
   .

@@ -34,8 +34,8 @@ The following steps will guide you how to propose changes to your work with
 
 > Tips:
 >
-> - We recommend linting all files using `shebang-run scripts/lint.sh .`
-> - We recommend running all tests using `shebang-run scripts/test.sh`
+> - We recommend linting all files using `bash scripts/lint.sh .`
+> - We recommend running all tests using `bash scripts/test.sh`
 > - Unless otherwise specified, all scripts in this project should be executed
 >   from the project root directory.
 
