@@ -158,7 +158,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN groupadd --gid $USER_GID $USER_GNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 
-COPY container/shebang-run /usr/local/bin/
 COPY --chown=$USERNAME:$USER_GNAME \
     container/git/.gitmessage.txt \
     "/home/$USERNAME/"
@@ -186,9 +185,6 @@ RUN apt-get update \
     && echo 'deb https://deb.debian.org/debian buster-backports main' > \
         /etc/apt/sources.list.d/buster-backports.list \
     && apt-get update \
-    #
-    # Setup the shebang-run command
-    && chmod 755 /usr/local/bin/shebang-run \
     #
     # Setup Git
     #   - Git Configuration: https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration

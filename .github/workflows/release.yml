@@ -40,8 +40,7 @@ jobs:
           mkdir .github/artifacts
           tag="$(printf '%s\n' "${{ github.ref }}" | cut -d / -f 3)"
           base_url="https://github.com/${{ github.repository }}/blob/$tag"
-          sh .devcontainer/container/shebang-run \
-            scripts/release/prepare-release-asset.sh \
+          bash scripts/release/prepare-release-asset.sh \
             --base-url "$base_url" \
             --output-dir .github/artifacts
         shell: bash
@@ -65,9 +64,7 @@ jobs:
           tag="$(printf '%s\n' "${{ github.ref }}" | cut -d / -f 3)"
           version="${tag#v}"
           release_notes="$(
-            sh .devcontainer/container/shebang-run \
-              scripts/release/release-notes-generator.sh \
-              "$version"
+            bash scripts/release/release-notes-generator.sh "$version"
           )"
 
           # Generate checksums

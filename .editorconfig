@@ -20,6 +20,3 @@ insert_final_newline = false
 
 [/.devcontainer/container/git/hooks/*]
 indent_size = 2
-
-[/.devcontainer/container/shebang-run]
-indent_size = 2
