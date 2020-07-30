@@ -1,4 +1,4 @@
-# ttdl-lunar-due
+# ttdl-lunar-calendar
 
 A lunar calendar plugin for [TTDL](https://github.com/VladimirMarkelov/ttdl).
 
