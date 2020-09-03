@@ -1,5 +1,6 @@
 use lunardate::LunarDate;
-use serde_json::{json, Value as JsonValue};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
 /*
@@ -12,73 +13,122 @@ use std::error::Error;
  *     (4 year digits - 2 month digits - 2 day digits)
  */
 
-const TTDL_STD_TAGS: &str = "specialTags";
-const TTDL_DUE_TAG: &str = "due";
-const TTDL_LUNAR_CALENDAR_TAG: &str = "!lunar-calendar";
+const TTDL_LUNAR_CALENDAR_PLUGIN_NAME: &str = "ttdl-lunar-calendar";
+const TTDL_LUNAR_CALENDAR_TAG_KEY: &str = "!lunar-calendar";
+const TTDL_LUNAR_CALENDAR_TAG_SEPARATOR: &str = ",";
 
-/// Convert lunar dates to gregorian dates from all "due" tags if exists a single "!lunar-calendar"
-/// tag with the value `true`.
+/// Convert lunar dates to gregorian dates for [todo.txt](https://github.com/todotxt/todo.txt)
+/// elements specified by the `!lunar-calendar` special tag with a comma separated list, an item of
+/// the list can be one of the following:
+///
+/// - A special tag prefixed with `#` (e.g. `#due` for "due")
+/// - An optional (e.g. `created` for "Creation Date")
+///
+/// > Tips:
+/// >
+/// > - For definitions of "Special Tags" or "Optional", please see
+/// >   [todo.txt format](https://github.com/todotxt/todo.txt) for details.
+/// > - For optional names from [TTDL](https://github.com/VladimirMarkelov/ttdl),
+/// >   please see [Plugin interaction](https://github.com/VladimirMarkelov/ttdl#plugin-interaction)
+/// >   for details.
 pub fn run(input: &str) -> Result<String, Box<dyn Error>> {
-    // Extract valid related tags info.
-    let default_tags = Vec::new();
-    let mut json: JsonValue = serde_json::from_str(input)?;
-    let tags = json
-        .get(TTDL_STD_TAGS)
-        .and_then(|x| x.as_array())
-        .unwrap_or(&default_tags);
-    let mut lunar_calendar_tag_info = None;
-    let mut due_tags_info = Vec::new();
-    for (index, tag) in tags.iter().enumerate() {
-        let tag = tag.as_object();
-        if tag.is_none() || tag.unwrap().is_empty() {
+    /*
+     * Parse input
+     */
+    let message_dto: TtdlPluginMessageDto = serde_json::from_str(input)?;
+    let original_message: PolishedTtdlPluginMessage = message_dto.into();
+    let mut current_message = original_message.clone();
+    let conversion_pointers = current_message.parse_plugin_value();
+
+    /*
+     * Convert
+     */
+    let mut error_message = None;
+    let mut history = HashSet::new();
+    for item in conversion_pointers {
+        let (expression, sorted_value) = match item {
+            ConversionPointer::SpecialTags(expression, name) => {
+                (expression, current_message.special_tags.get_mut(&name))
+            }
+            ConversionPointer::Optional(expression, name) => {
+                let sorted_value = match current_message.optional.as_mut() {
+                    Some(x) => x.get_mut(&name),
+                    None => None,
+                };
+                (expression, sorted_value)
+            }
+        };
+        if history.contains(&expression) {
+            error_message = Some(format!(
+                r#"duplicated "{expression}""#,
+                expression = expression
+            ));
             break;
         }
-        let (first_item_key, first_item_value) = tag.unwrap().iter().next().unwrap();
-        match first_item_key.as_str() {
-            TTDL_DUE_TAG => {
-                if let Some(due_tag_value) = first_item_value.as_str() {
-                    due_tags_info.push((index, due_tag_value.to_string()));
-                }
-            }
-            TTDL_LUNAR_CALENDAR_TAG => {
-                let normalized_tag_value = match first_item_value {
-                    JsonValue::Bool(value) => *value,
-                    JsonValue::String(value) => value.parse().unwrap_or_default(),
-                    _ => false,
-                };
-                if lunar_calendar_tag_info.is_some() {
-                    panic!(format!(r#"Found duplicate "{}""#, TTDL_LUNAR_CALENDAR_TAG));
-                }
-                lunar_calendar_tag_info = Some((index, normalized_tag_value));
-            }
-            _ => (),
+        if sorted_value.is_none() {
+            error_message = Some(format!(
+                r#"not found "{expression}""#,
+                expression = expression
+            ));
+            break;
         }
-    }
-    if lunar_calendar_tag_info.is_none() {
-        return Ok(input.to_string());
-    }
-
-    // Prepare for JSON changes.
-    let tags = json[TTDL_STD_TAGS].as_array_mut().unwrap();
-    let (lunar_calendar_tag_index, lunar_calendar_tag_value) = lunar_calendar_tag_info.unwrap();
-
-    // Convert all values from the "due" tags and let TTDL handle multiple "due" tags.
-    if lunar_calendar_tag_value {
-        for (due_tag_index, due_tag_value) in due_tags_info {
-            let lunar_date_source = parse_ttdl_lunar_date(&due_tag_value);
-            if lunar_date_source.is_none() {
-                panic!("Unexpected due date format")
+        let (value, _) = sorted_value.unwrap();
+        let lunar_date_source = parse_ttdl_lunar_date(&value);
+        if lunar_date_source.is_none() {
+            error_message = Some(format!(
+                r#"unexpected format for "{expression}""#,
+                expression = expression
+            ));
+            break;
+        }
+        match to_ttdl_solar_date_string(lunar_date_source.unwrap()) {
+            Ok(solar_date_string) => {
+                *value = solar_date_string;
+                history.insert(expression);
             }
-            let solar_due_string = to_ttdl_solar_string(lunar_date_source.unwrap())?;
-            *tags.get_mut(due_tag_index).unwrap() = json!({ TTDL_DUE_TAG: solar_due_string });
+            Err(err) => {
+                error_message = Some(format!(
+                    r#"unexpected value for "{expression}": {reason}"#,
+                    expression = expression,
+                    reason = err
+                ));
+                break;
+            }
         }
     }
 
-    // Remove the "!lunar-calendar" tag.
-    tags.remove(lunar_calendar_tag_index);
+    /*
+     * Generate output
+     */
+    let new_message = match error_message {
+        Some(x) => {
+            let mut current_message = original_message;
+            current_message.description = format!(
+                "[ERR({plugin_name}) {error_message}] {original_description}",
+                plugin_name = TTDL_LUNAR_CALENDAR_PLUGIN_NAME,
+                error_message = x,
+                original_description = current_message.description
+            );
+            current_message
+        }
+        None => current_message,
+    };
+    let new_message_dto: TtdlPluginMessageDto = new_message.into();
+    let output = serde_json::to_string(&new_message_dto)?;
+    Ok(output)
+}
 
-    // Return the updated todo item.
-    Ok(json.to_string())
+#[derive(Debug, PartialEq)]
+struct LunarDateSource {
+    year: i32,
+    month: u32,
+    day: u32,
+}
+
+impl LunarDateSource {
+    pub fn new(year: i32, month: u32, day: u32) -> Self {
+        Self { year, month, day }
+    }
 }
 
 fn parse_ttdl_lunar_date(lunar_date: &str) -> Option<LunarDateSource> {
@@ -102,23 +152,97 @@ fn parse_ttdl_lunar_date(lunar_date: &str) -> Option<LunarDateSource> {
     Some(lunar_date_source)
 }
 
-fn to_ttdl_solar_string(source: LunarDateSource) -> Result<String, Box<dyn Error>> {
+fn to_ttdl_solar_date_string(source: LunarDateSource) -> Result<String, Box<dyn Error>> {
     let lunar_date = LunarDate::new(source.year, source.month, source.day, false);
     let solar_date = lunar_date.to_solar_date()?;
     let solar_string = solar_date.format("%Y-%m-%d").to_string();
     Ok(solar_string)
 }
 
-#[derive(Debug, PartialEq)]
-struct LunarDateSource {
-    year: i32,
-    month: u32,
-    day: u32,
+// https://github.com/VladimirMarkelov/ttdl#plugin-interaction
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TtdlPluginMessageDto {
+    description: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    optional: Option<Vec<HashMap<String, String>>>,
+    special_tags: Vec<HashMap<String, String>>,
 }
 
-impl LunarDateSource {
-    pub fn new(year: i32, month: u32, day: u32) -> Self {
-        Self { year, month, day }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct PolishedTtdlPluginMessage {
+    description: String,
+    optional: Option<HashMap<String, (String, usize)>>,
+    special_tags: HashMap<String, (String, usize)>,
+}
+
+enum ConversionPointer {
+    Optional(String, String),
+    SpecialTags(String, String),
+}
+
+impl From<TtdlPluginMessageDto> for PolishedTtdlPluginMessage {
+    fn from(standard_message: TtdlPluginMessageDto) -> Self {
+        let transformer = |maps: Vec<HashMap<String, String>>| {
+            maps.iter()
+                .enumerate()
+                .flat_map(|(index, map)| {
+                    map.iter()
+                        .map(move |(k, v)| (k.to_string(), (v.to_string(), index)))
+                })
+                .collect()
+        };
+        let polished_optional = standard_message.optional.map(transformer);
+        let polished_special_tags = transformer(standard_message.special_tags);
+        Self {
+            description: standard_message.description,
+            optional: polished_optional,
+            special_tags: polished_special_tags,
+        }
+    }
+}
+
+impl From<PolishedTtdlPluginMessage> for TtdlPluginMessageDto {
+    fn from(polished_message: PolishedTtdlPluginMessage) -> Self {
+        let transformer = |map: HashMap<String, (String, usize)>| {
+            let mut vec: Vec<_> = map.iter().collect();
+            vec.sort_by(|(_, (_, index_a)), (_, (_, index_b))| index_a.cmp(index_b));
+            vec.iter()
+                .map(|(name, (value, _))| {
+                    let mut map = HashMap::new();
+                    map.insert(name.to_string(), value.to_string());
+                    map
+                })
+                .collect()
+        };
+        let standard_optional = polished_message.optional.map(transformer);
+        let standard_special_tags = transformer(polished_message.special_tags);
+        Self {
+            description: polished_message.description,
+            optional: standard_optional,
+            special_tags: standard_special_tags,
+        }
+    }
+}
+
+impl PolishedTtdlPluginMessage {
+    pub fn get_special_tag_value(&self, key: &str) -> Option<String> {
+        let (value, _) = &self.special_tags.get(key)?;
+        Some(value.to_string())
+    }
+
+    pub fn parse_plugin_value(&self) -> Vec<ConversionPointer> {
+        // Should always contain the plugin value for the running plugin.
+        let plugin_value = self
+            .get_special_tag_value(TTDL_LUNAR_CALENDAR_TAG_KEY)
+            .unwrap();
+        plugin_value
+            .split(TTDL_LUNAR_CALENDAR_TAG_SEPARATOR)
+            .map(|expression| match expression.strip_prefix("#") {
+                Some(x) => ConversionPointer::SpecialTags(expression.to_string(), x.to_string()),
+                None => ConversionPointer::Optional(expression.to_string(), expression.to_string()),
+            })
+            .collect()
     }
 }
 
@@ -144,10 +268,10 @@ mod tests {
     }
 
     #[test]
-    fn test_to_ttdl_solar_string() {
+    fn test_to_ttdl_solar_date_string() {
         assert_eq!(
             "2000-02-05",
-            to_ttdl_solar_string(LunarDateSource::new(2000, 1, 1)).unwrap()
+            to_ttdl_solar_date_string(LunarDateSource::new(2000, 1, 1)).unwrap()
         );
     }
 }

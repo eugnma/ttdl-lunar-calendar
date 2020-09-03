@@ -1,0 +1,83 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'ttdl_lunar_calendar'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=ttdl_lunar_calendar"
+                ],
+                "filter": {
+                    "name": "ttdl_lunar_calendar",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'ttdl-lunar-calendar'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=ttdl-lunar-calendar",
+                    "--package=ttdl_lunar_calendar"
+                ],
+                "filter": {
+                    "name": "ttdl-lunar-calendar",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'ttdl-lunar-calendar'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=ttdl-lunar-calendar",
+                    "--package=ttdl_lunar_calendar"
+                ],
+                "filter": {
+                    "name": "ttdl-lunar-calendar",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'ttdl_lunar_calendar_test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=ttdl_lunar_calendar_test",
+                    "--package=ttdl_lunar_calendar"
+                ],
+                "filter": {
+                    "name": "ttdl_lunar_calendar_test",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

@@ -4,10 +4,23 @@ A lunar calendar plugin for [TTDL](https://github.com/VladimirMarkelov/ttdl).
 
 ## Usage
 
-Add the `!lunar-calendar` tag with the value `true`, then the value from `due`
-tag will be regarded as a lunar date, for example, the item
-`example due:2000-01-01 !lunar-calendar:true` will be converted to
-`example due:2000-02-05`.
+Add the `!lunar-calendar` special tag with a comma separated list, an item of
+the list can be one of the following:
+
+- A special tag prefixed with `#` (e.g. `#due` for "due")
+- An optional (e.g. `created` for "Creation Date")
+
+> Tips:
+>
+> - For definitions of "Special Tags" or "Optional", please see
+>   [todo.txt format](https://github.com/todotxt/todo.txt) for details.
+> - For optional names from [TTDL](https://github.com/VladimirMarkelov/ttdl),
+>   please see [Plugin interaction](https://github.com/VladimirMarkelov/ttdl#plugin-interaction)
+>   for details.
+
+For example, the item
+`2000-01-01 example due:2000-01-01 !lunar-calendar:created,#due` will be
+converted to `2000-02-05 example due:2000-02-05 !lunar-calendar:created,#due`.
 
 > Notes:
 >

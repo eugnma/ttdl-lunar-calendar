@@ -1,15 +1,20 @@
 The ttdl_lunar_calendar package uses some third party libraries under their own license terms:
 
 * autocfg v1.0.0 - https://github.com/cuviper/autocfg/blob/1.0.0/LICENSE-APACHE
-* itoa v0.4.5 - https://github.com/dtolnay/itoa/blob/0.4.5/LICENSE-APACHE
+* itoa v0.4.6 - https://github.com/dtolnay/itoa/blob/0.4.6/LICENSE-APACHE
 * lazy_static v1.4.0 - https://github.com/rust-lang-nursery/lazy-static.rs/blob/1.4.0/LICENSE-APACHE
-* libc v0.2.71 - https://github.com/rust-lang/libc/blob/0.2.71/LICENSE-APACHE
-* num-integer v0.1.42 - https://github.com/rust-num/num-integer/blob/num-integer-0.1.42/LICENSE-APACHE
-* num-traits v0.2.11 - https://github.com/rust-num/num-traits/blob/num-traits-0.2.11/LICENSE-APACHE
+* libc v0.2.74 - https://github.com/rust-lang/libc/blob/0.2.74/LICENSE-APACHE
+* num-integer v0.1.43 - https://github.com/rust-num/num-integer/blob/num-integer-0.1.43/LICENSE-APACHE
+* num-traits v0.2.12 - https://github.com/rust-num/num-traits/blob/num-traits-0.2.12/LICENSE-APACHE
+* proc-macro2 v1.0.19 - https://github.com/alexcrichton/proc-macro2/blob/1.0.19/LICENSE-APACHE
+* quote v1.0.7 - https://github.com/dtolnay/quote/blob/1.0.7/LICENSE-APACHE
 * ryu v1.0.5 - https://github.com/dtolnay/ryu/blob/1.0.5/LICENSE-APACHE
-* serde v1.0.111 - https://github.com/serde-rs/serde/blob/v1.0.111/LICENSE-APACHE
-* serde_json v1.0.55 - https://github.com/serde-rs/json/blob/v1.0.55/LICENSE-APACHE
+* serde v1.0.114 - https://github.com/serde-rs/serde/blob/v1.0.114/LICENSE-APACHE
+* serde_derive v1.0.114 - https://github.com/serde-rs/serde/blob/v1.0.114/LICENSE-APACHE
+* serde_json v1.0.57 - https://github.com/serde-rs/json/blob/v1.0.57/LICENSE-APACHE
+* syn v1.0.36 - https://github.com/dtolnay/syn/blob/1.0.36/LICENSE-APACHE
 * time v0.1.43 - https://github.com/time-rs/time/blob/v0.1.43/LICENSE-APACHE
+* unicode-xid v0.2.1 - https://github.com/unicode-rs/unicode-xid/blob/v0.2.1/LICENSE-APACHE
 
                                     Apache License
                             Version 2.0, January 2004
@@ -213,7 +218,7 @@ The ttdl_lunar_calendar package uses some third party libraries under their own 
     See the License for the specific language governing permissions and
     limitations under the License.
 
-* chrono v0.4.11 - https://github.com/chronotope/chrono/blob/v0.4.11/LICENSE.txt
+* chrono v0.4.13 - https://github.com/chronotope/chrono/blob/v0.4.13/LICENSE.txt
 
     Rust-chrono is dual-licensed under The MIT License [1] and
     Apache 2.0 License [2]. Copyright (c) 2014--2017, Kang Seonghoon and
@@ -479,9 +484,9 @@ The ttdl_lunar_calendar package uses some third party libraries under their own 
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
-* winapi 0.3.8 - https://github.com/retep998/winapi-rs/blob/0.3.8/LICENSE-APACHE
-* winapi-i686-pc-windows-gnu 0.4.0 - https://github.com/retep998/winapi-rs/blob/0.3.8/i686/LICENSE-APACHE
-* winapi-x86_64-pc-windows-gnu 0.4.0 - https://github.com/retep998/winapi-rs/blob/0.3.8/x86_64/LICENSE-APACHE
+* winapi v0.3.9 - https://github.com/retep998/winapi-rs/blob/0.3.9/LICENSE-APACHE
+* winapi-i686-pc-windows-gnu v0.4.0 - https://github.com/retep998/winapi-rs/blob/0.3.8/i686/LICENSE-APACHE
+* winapi-x86_64-pc-windows-gnu v0.4.0 - https://github.com/retep998/winapi-rs/blob/0.3.8/x86_64/LICENSE-APACHE
 
                                     Apache License
                             Version 2.0, January 2004
